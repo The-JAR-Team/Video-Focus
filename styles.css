@@ -1,0 +1,83 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1 {
+    margin-top: 30px;
+  }
+  
+  .video-container {
+    margin: 20px auto;
+    max-width: 560px;
+  }
+  
+  #status {
+    margin-top: 10px;
+    font-size: 18px;
+  }
+  
+  #controls {
+    margin: 20px;
+  }
+  
+  #videoInput {
+    width: 300px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+  
+  #loadVideo {
+    padding: 10px 20px;
+    border: none;
+    background-color: #bb86fc;
+    color: #ffffff;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  #loadVideo:hover {
+    background-color: #3700b3;
+  }
+  
+  #sampleVideos {
+    margin-top: 20px;
+  }
+  
+  .sampleVideo {
+    display: inline-block;
+    margin: 10px;
+    cursor: pointer;
+  }
+  
+  .sampleVideo img {
+    width: 150px;
+    border-radius: 10px;
+  }
+  
+  .sampleVideo p {
+    margin-top: 5px;
+  }
+  
+  #graphContainer {
+    margin: 20px auto;
+    width: 600px;
+  }
+  
+  #focusGraph {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 5px;
+  }
+  
+  video {
+    display: none;
+  }
+  

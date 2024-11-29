@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Video Player with Gaze Detection</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>YouTube Video Player with Gaze Detection</h1>
+  <div id="controls">
+    <input type="text" id="videoInput" placeholder="Enter YouTube Video URL or ID">
+    <button id="loadVideo">Load Video</button>
+  </div>
+  <div class="video-container">
+    <div id="ytPlayer"></div>
+  </div>
+  <p id="status">Status: Initializing...</p>
+  <div id="graphContainer">
+    <canvas id="focusGraph" width="600" height="100"></canvas>
+  </div>
+  <video id="video" autoplay playsinline></video>
+
+  <div id="sampleVideos">
+    <h2>Sample Videos to Try</h2>
+    <div class="sampleVideo" data-videoid="dQw4w9WgXcQ">
+      <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg" alt="Sample Video 1">
+      <p>Sample Video 1</p>
+    </div>
+    <div class="sampleVideo" data-videoid="lTTajzrSkCw">
+      <img src="https://img.youtube.com/vi/lTTajzrSkCw/0.jpg" alt="Sample Video 2">
+      <p>Sample Video 2</p>
+    </div>
+  </div>
+
+  <!-- Load YouTube IFrame Player API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <!-- Load MediaPipe FaceMesh -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+  <!-- Load Chart.js for Graphing -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Main Script -->
+  <script src="script.js"></script>
+</body>
+</html>
