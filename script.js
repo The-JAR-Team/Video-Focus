@@ -1,48 +1,169 @@
-
-
+// script.js
 let player;
 let isPlaying = true;
 let focusData = [];
 let focusInterval;
-let graphUpdateInterval = 10000; // 10 seconds
+const graphUpdateInterval = 10000; // 10 seconds
 
-document.addEventListener('DOMContentLoaded', () => {
-
-const videoElement = document.getElementById('video');
-const statusElement = document.getElementById('status');
-const focusGraph = document.getElementById('focusGraph');
-const graphCtx = focusGraph.getContext('2d');
-
+// Gaze Tracking Variables
 let gazeCounter = { left: 0, right: 0, center: 0 };
 let currentGaze = 'Looking center';
 const thresholdFrames = 3;
 
-// Initialize the focus graph
-let chart = new Chart(graphCtx, {
-  type: 'bar',
-  data: {
-    labels: [],
-    datasets: [{
-      label: 'Focus',
-      data: [],
-      backgroundColor: []
-    }]
-  },
-  options: {
-    scales: {
-      x: { display: true },
-      y: {
-        display: true,
-        suggestedMin: 0,
-        suggestedMax: 1
+// Chart Variable
+let chart;
+
+// Flag to check if the player is ready
+let isPlayerReady = false;
+
+// Make onYouTubeIframeAPIReady globally accessible
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('ytPlayer', {
+    height: '315',
+    width: '560',
+    videoId: '', // Start with no video
+    events: {
+      'onReady': onPlayerReady
+    }
+  });
+}
+
+// Assign the function to the global window object
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// Player Ready Callback
+function onPlayerReady(event) {
+  console.log("Player is ready.");
+  isPlayerReady = true;
+
+  // Enable the 'Load Video' button
+  const loadVideoButton = document.getElementById('loadVideo');
+  if (loadVideoButton) loadVideoButton.disabled = false;
+
+  // Enable all 'Sample Video' buttons
+  const sampleVideos = document.querySelectorAll('.sampleVideo');
+  sampleVideos.forEach(item => {
+    item.disabled = false;
+  });
+}
+
+// Wait for the DOM to fully load
+document.addEventListener('DOMContentLoaded', () => {
+  // Get DOM Elements
+  const videoElement = document.getElementById('video');
+  const statusElement = document.getElementById('status');
+  const focusGraph = document.getElementById('focusGraph');
+  const graphCtx = focusGraph.getContext('2d');
+
+  // Initialize the focus graph
+  chart = new Chart(graphCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Focus',
+        data: [],
+        backgroundColor: []
+      }]
+    },
+    options: {
+      scales: {
+        x: { display: true },
+        y: {
+          display: true,
+          suggestedMin: 0,
+          suggestedMax: 1
+        }
       }
     }
+  });
+
+  // Initially disable 'Load Video' and 'Sample Video' buttons
+  const loadVideoButton = document.getElementById('loadVideo');
+  if (loadVideoButton) loadVideoButton.disabled = true;
+
+  const sampleVideos = document.querySelectorAll('.sampleVideo');
+  sampleVideos.forEach(item => {
+    item.disabled = true;
+  });
+
+  // Event Listener for 'Load Video' Button
+  if (loadVideoButton) {
+    loadVideoButton.addEventListener('click', () => {
+      const videoInput = document.getElementById('videoInput').value;
+      const videoId = extractVideoID(videoInput);
+      if (videoId) {
+        loadVideoWithRetry(videoId);
+      } else {
+        alert('Invalid YouTube URL or Video ID.');
+      }
+    });
   }
+
+  // Event Listeners for 'Sample Video' Buttons
+  sampleVideos.forEach(item => {
+    item.addEventListener('click', () => {
+      const videoId = item.getAttribute('data-videoid');
+      if (videoId) {
+        loadVideoWithRetry(videoId);
+      }
+    });
+  });
+
+  // Initialize MediaPipe FaceMesh
+  const faceMesh = new FaceMesh({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+  });
+
+  faceMesh.setOptions({
+    maxNumFaces: 1,
+    refineLandmarks: true,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+  });
+
+  faceMesh.onResults(onResults);
+
+  // Initialize Camera and Start Processing Frames
+  if (videoElement) {
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await faceMesh.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480
+    });
+
+    camera.start();
+  } else {
+    console.error('Webcam video element not found.');
+  }
+
+  // Start Collecting Focus Data
+  startFocusInterval();
 });
 
+// Function to Load Video with Retry Mechanism
+function loadVideoWithRetry(videoId, retries = 5, delay = 1000) {
+  if (isPlayerReady && player && typeof player.loadVideoById === 'function') {
+    player.loadVideoById(videoId);
+    isPlaying = true;
+    focusData = [];
+    chart.data.labels = [];
+    chart.data.datasets[0].data = [];
+    chart.update();
+    console.log(`Video loaded: ${videoId}`);
+  } else if (retries > 0) {
+    console.log(`Player not ready, retrying in ${delay}ms... (${retries} retries left)`);
+    setTimeout(() => {
+      loadVideoWithRetry(videoId, retries - 1, delay);
+    }, delay);
+  } else {
+    alert('Failed to load video. Please try again later.');
+  }
+}
 
-});
-// Start collecting focus data
+// Start Collecting Focus Data at Intervals
 function startFocusInterval() {
   focusInterval = setInterval(() => {
     focusData.push(isPlaying ? 1 : 0);
@@ -50,8 +171,9 @@ function startFocusInterval() {
   }, graphUpdateInterval);
 }
 
-// Update the focus graph
+// Update the Focus Graph
 function updateGraph() {
+  if (!chart) return; // Ensure chart is initialized
   const labels = focusData.map((_, index) => `${index * 10}-${(index + 1) * 10}s`);
   chart.data.labels = labels;
   chart.data.datasets[0].data = focusData;
@@ -59,71 +181,7 @@ function updateGraph() {
   chart.update();
 }
 
-// Load the YouTube IFrame Player API
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player('ytPlayer', {
-    height: '315',
-    width: '560',
-    videoId: '',
-    events: {
-      'onReady': onPlayerReady
-    }
-  });
-}
-
-// Player ready callback
-function onPlayerReady(event) {
-  console.log("Player is ready.");
-}
-
-// Function to play the video
-function playVideo() {
-  if (player && typeof player.playVideo === 'function') {
-    player.playVideo();
-    isPlaying = true;
-    console.log("Video resumed.");
-  }
-}
-
-// Function to pause the video
-function pauseVideo() {
-  if (player && typeof player.pauseVideo === 'function') {
-    player.pauseVideo();
-    isPlaying = false;
-    console.log("Video paused.");
-  }
-}
-
-// Load video based on input
-document.getElementById('loadVideo').addEventListener('click', () => {
-  const videoInput = document.getElementById('videoInput').value;
-  const videoId = extractVideoID(videoInput);
-  if (videoId) {
-    player.loadVideoById(videoId);
-    isPlaying = true;
-    focusData = [];
-    chart.data.labels = [];
-    chart.data.datasets[0].data = [];
-    chart.update();
-  } else {
-    alert('Invalid YouTube URL or Video ID.');
-  }
-});
-
-// Load sample videos on click
-document.querySelectorAll('.sampleVideo').forEach(item => {
-  item.addEventListener('click', () => {
-    const videoId = item.getAttribute('data-videoid');
-    player.loadVideoById(videoId);
-    isPlaying = true;
-    focusData = [];
-    chart.data.labels = [];
-    chart.data.datasets[0].data = [];
-    chart.update();
-  });
-});
-
-// Function to extract Video ID from URL or ID
+// Function to Extract Video ID from URL or Direct ID
 function extractVideoID(input) {
   const urlRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:embed\/|v\/|watch\?v=)|youtu\.be\/)([\w-]{11})/;
   const match = input.match(urlRegex);
@@ -136,36 +194,29 @@ function extractVideoID(input) {
   }
 }
 
-// Initialize MediaPipe FaceMesh
-const faceMesh = new FaceMesh({
-  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-});
+// Function to Play the Video
+function playVideo() {
+  if (player && typeof player.playVideo === 'function') {
+    player.playVideo();
+    isPlaying = true;
+    console.log("Video resumed.");
+  }
+}
 
-faceMesh.setOptions({
-  maxNumFaces: 1,
-  refineLandmarks: true,
-  minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5
-});
+// Function to Pause the Video
+function pauseVideo() {
+  if (player && typeof player.pauseVideo === 'function') {
+    player.pauseVideo();
+    isPlaying = false;
+    console.log("Video paused.");
+  }
+}
 
-faceMesh.onResults(onResults);
-
-// Access the webcam
-const camera = new Camera(videoElement, {
-  onFrame: async () => {
-    await faceMesh.send({ image: videoElement });
-  },
-  width: 640,
-  height: 480
-});
-
-camera.start();
-
-// Start collecting focus data
-startFocusInterval();
-
-// Handle results from FaceMesh
+// Handle Results from FaceMesh
 function onResults(results) {
+  const statusElement = document.getElementById('status');
+  if (!statusElement) return;
+
   if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
     const landmarks = results.multiFaceLandmarks[0];
     const gaze = estimateGaze(landmarks);
@@ -177,7 +228,7 @@ function onResults(results) {
   }
 }
 
-// Function to estimate gaze direction
+// Function to Estimate Gaze Direction
 function estimateGaze(landmarks) {
   const leftEye = {
     outer: landmarks[33],
@@ -221,7 +272,7 @@ function estimateGaze(landmarks) {
   return currentGaze;
 }
 
-// Function to handle video playback
+// Function to Handle Video Playback Based on Gaze
 function handleVideoPlayback(gaze) {
   if (gaze === 'Looking center') {
     if (!isPlaying) {
