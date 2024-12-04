@@ -1,8 +1,12 @@
+
+
 let player;
 let isPlaying = true;
 let focusData = [];
 let focusInterval;
 let graphUpdateInterval = 10000; // 10 seconds
+
+document.addEventListener('DOMContentLoaded', () => {
 
 const videoElement = document.getElementById('video');
 const statusElement = document.getElementById('status');
@@ -36,6 +40,8 @@ let chart = new Chart(graphCtx, {
   }
 });
 
+
+});
 // Start collecting focus data
 function startFocusInterval() {
   focusInterval = setInterval(() => {
