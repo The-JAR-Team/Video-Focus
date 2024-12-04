@@ -171,10 +171,9 @@ function startFocusInterval() {
   }, graphUpdateInterval);
 }
 
-// Update the Focus Graph
 function updateGraph() {
   if (!chart) return; // Ensure chart is initialized
-  const labels = focusData.map((_, index) => `${index * 10}-${(index + 1) * 10}s`);
+  const labels = focusData.map((_, index) => `${index * 3}-${(index + 1) * 3}s`);
   chart.data.labels = labels;
   chart.data.datasets[0].data = focusData;
   chart.data.datasets[0].backgroundColor = focusData.map(value => value ? '#00ff00' : '#ff0000');
