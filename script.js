@@ -3,7 +3,7 @@ let player;
 let isPlaying = true;
 let focusData = [];
 let focusInterval;
-const graphUpdateInterval = 10000; // 10 seconds
+const graphUpdateInterval = 3000; // 10 seconds
 
 // Gaze Tracking Variables
 let gazeCounter = { left: 0, right: 0, center: 0 };
